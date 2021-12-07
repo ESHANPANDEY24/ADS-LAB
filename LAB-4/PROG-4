@@ -1,0 +1,182 @@
+#include&lt;stdio.h&gt;
+#include&lt;stdlib.h&gt;
+struct Node
+{
+int key;
+struct Node *lft;
+struct Node *rgt;
+int height;
+};
+int max(int a, int b);
+int height(struct Node *N)
+{
+if (N == NULL)
+return 0;
+return N-&gt;height;
+}
+int max(int a, int b)
+{
+return (a &gt; b)? a : b;
+}
+struct Node* newNode(int key)
+{
+struct Node* node = (struct Node*)
+malloc(sizeof(struct Node));
+node-&gt;key = key;
+node-&gt;lft = NULL;
+node-&gt;rgt = NULL;
+node-&gt;height = 1;
+
+return(node);
+}
+struct Node *rgtRotate(struct Node *y)
+{
+struct Node *x = y-&gt;lft;
+struct Node *T2 = x-&gt;rgt;
+x-&gt;rgt = y;
+y-&gt;lft = T2;
+y-&gt;height = max(height(y-&gt;lft), height(y-&gt;rgt))+1;
+x-&gt;height = max(height(x-&gt;lft), height(x-&gt;rgt))+1;
+return x;
+}
+struct Node *lftRotate(struct Node *x)
+{
+struct Node *y = x-&gt;rgt;
+struct Node *T2 = y-&gt;lft;
+y-&gt;lft = x;
+x-&gt;rgt = T2;
+x-&gt;height = max(height(x-&gt;lft), height(x-&gt;rgt))+1;
+y-&gt;height = max(height(y-&gt;lft), height(y-&gt;rgt))+1;
+return y;
+}
+int getBalance(struct Node *N)
+{
+if (N == NULL)
+return 0;
+return height(N-&gt;lft) - height(N-&gt;rgt);
+}
+struct Node* insert(struct Node* node, int key)
+{
+
+if (node == NULL)
+return(newNode(key));
+if (key &lt; node-&gt;key)
+node-&gt;lft = insert(node-&gt;lft, key);
+else if (key &gt; node-&gt;key)
+node-&gt;rgt = insert(node-&gt;rgt, key);
+else
+return node;
+node-&gt;height = 1 + max(height(node-&gt;lft),
+height(node-&gt;rgt));
+int balance = getBalance(node);
+if (balance &gt; 1 &amp;&amp; key &lt; node-&gt;lft-&gt;key)
+return rgtRotate(node);
+if (balance &lt; -1 &amp;&amp; key &gt; node-&gt;rgt-&gt;key)
+return lftRotate(node);
+if (balance &gt; 1 &amp;&amp; key &gt; node-&gt;lft-&gt;key)
+{
+node-&gt;lft = lftRotate(node-&gt;lft);
+return rgtRotate(node);
+}
+if (balance &lt; -1 &amp;&amp; key &lt; node-&gt;rgt-&gt;key)
+{
+node-&gt;rgt = rgtRotate(node-&gt;rgt);
+return lftRotate(node);
+}
+return node;
+}
+struct Node * minValueNode(struct Node* node)
+{
+struct Node* current = node;
+
+/* loop down to find the lftmost leaf */
+while (current-&gt;lft != NULL)
+current = current-&gt;lft;
+return current;
+}
+struct Node* deleteNode(struct Node* base, int key)
+{
+if (base == NULL)
+return base;
+if ( key &lt; base-&gt;key )
+base-&gt;lft = deleteNode(base-&gt;lft, key);
+else if( key &gt; base-&gt;key )
+base-&gt;rgt = deleteNode(base-&gt;rgt, key);
+else
+{
+if( (base-&gt;lft == NULL) || (base-&gt;rgt == NULL) )
+{
+struct Node *temp = base-&gt;lft ? base-&gt;lft :
+base-&gt;rgt;
+if (temp == NULL)
+{
+temp = base;
+base = NULL;
+}
+else
+*base = *temp;
+free(temp);
+}
+else
+{
+
+struct Node* temp = minValueNode(base-&gt;rgt);
+base-&gt;key = temp-&gt;key;
+base-&gt;rgt = deleteNode(base-&gt;rgt, temp-&gt;key);
+}
+}
+if (base == NULL)
+return base;
+base-&gt;height = 1 + max(height(base-&gt;lft),
+height(base-&gt;rgt));
+int balance = getBalance(base);
+if (balance &gt; 1 &amp;&amp; getBalance(base-&gt;lft) &gt;= 0)
+return rgtRotate(base);
+if (balance &gt; 1 &amp;&amp; getBalance(base-&gt;lft) &lt; 0)
+{
+base-&gt;lft = lftRotate(base-&gt;lft);
+return rgtRotate(base);
+}
+if (balance &lt; -1 &amp;&amp; getBalance(base-&gt;rgt) &lt;= 0)
+return lftRotate(base);
+if (balance &lt; -1 &amp;&amp; getBalance(base-&gt;rgt) &gt; 0)
+{
+base-&gt;rgt = rgtRotate(base-&gt;rgt);
+return lftRotate(base);
+}
+return base;
+}
+void preOrder(struct Node *base)
+{
+if(base != NULL)
+{
+
+printf(&quot;%d &quot;, base-&gt;key);
+preOrder(base-&gt;lft);
+preOrder(base-&gt;rgt);
+}
+}
+int main()
+{
+struct Node *base = NULL;
+base = insert(base, 27);
+base = insert(base, 9);
+base = insert(base, 19);
+base = insert(base, 91);
+base = insert(base, 90);
+base = insert(base, 72);
+printf(&quot;The output of an AVL tree in preOrder form: \n&quot;);
+preOrder(base);
+printf(&quot;\n&quot;);
+base = deleteNode(base, 9);
+base = deleteNode(base, 72);
+printf(&quot;The tree in preOrder traversal outputs after deletion: \n&quot;);
+preOrder(base);
+printf(&quot;\n&quot;);
+base = insert(base, 1);
+base = insert(base, 2709);
+printf(&quot;The tree in preOrder traversal outputs 2 more inserts: \n&quot;);
+preOrder(base);
+printf(&quot;\n&quot;);
+return 0;
+}
